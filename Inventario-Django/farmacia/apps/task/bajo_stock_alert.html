@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerta de Bajo Stock</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        .header.critico { background-color: #d9534f; }
+        .header.urgente { background-color: #f0ad4e; }
+        .header.bajo { background-color: #5bc0de; }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px 30px;
+        }
+        .content h2 {
+            color: #333;
+            font-size: 20px;
+        }
+        .product-info {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        .product-info li {
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #f4f4f4;
+        }
+        .product-info li:last-child {
+            border-bottom: none;
+        }
+        .product-info strong {
+            color: #555;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777;
+            background-color: #f9f9f9;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header {{ notificacion.urgencia|lower }}">
+            <h1>{% if notificacion.urgencia == 'CRITICO' %}🔥{% elif notificacion.urgencia == 'URGENTE' %}⚠️{% else %}📉{% endif %} Alerta de Inventario: {{ urgencia_display }}</h1>
+        </div>
+        <div class="content">
+            <h2>Detalles del Producto</h2>
+            <p>Se ha detectado un nivel de stock bajo para el siguiente producto:</p>
+            <ul class="product-info">
+                <li><strong>Producto:</strong> <span>{{ producto.nombre }}</span></li>
+                <li><strong>Código:</strong> <span>{{ producto.codigo }}</span></li>
+                <li><strong>Categoría:</strong> <span>{{ producto.categoria.nombre|default:"N/A" }}</span></li>
+                <li><strong>Stock Mínimo:</strong> <span>{{ producto.stock_minimo }} unidades</span></li>
+                <li><strong>Stock Actual:</strong> <span style="color: #d9534f; font-weight: bold;">{{ producto.stock_actual }} unidades</span></li>
+                <li><strong>Déficit:</strong> <span>{{ stock_necesario|default:0 }} unidades</span></li>
+            </ul>
+            <p><strong>Mensaje:</strong> {{ notificacion.mensaje|linebreaksbr }}</p>
+            <p><strong>Fecha de la alerta:</strong> {{ fecha }}</p>
+            <p style="text-align: center;">
+                <a href="{{ frontend_url }}/productos/{{ producto.id }}" class="button">Gestionar Producto</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>Este es un correo generado automáticamente por el Sistema de Gestión de Inventario.</p>
+        </div>
+    </div>
+</body>
+</html>

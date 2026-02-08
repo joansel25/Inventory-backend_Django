@@ -1,59 +1,33 @@
+# apps/users/serializers.py
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Usuario, Rol
-
-
-
-class RolSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rol
-        fields = '__all__'
-
-
+from .models import Usuario
 
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = '__all__'
-        extra_kwargs = {
-            "password": {"write_only": True}  
-        }
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'rol', 'telefono', 'date_joined']
+        read_only_fields = ['id', 'date_joined']
 
-   
+class RegistroSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=6)
+
+    class Meta:
+        model = Usuario
+        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'rol', 'telefono']
+
     def create(self, validated_data):
-        password = validated_data.pop("password", None)
-        user = Usuario(**validated_data)
-        if password:
-            user.set_password(password)
-        user.save()
-        return user
+        usuario = Usuario.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email'),
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            rol=validated_data.get('rol', 'auxiliar'),
+            telefono=validated_data.get('telefono'),
+        )
+        usuario.set_password(validated_data['password'])
+        usuario.save()
+        return usuario
 
-
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Serializer personalizado para añadir datos extras al token JWT"""
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-
-        token['username'] = user.username
-        token['email'] = user.email
-        token['telefono'] = user.telefono
-        token['rol'] = user.rol.name if user.rol else None
-
-        return token
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        data['user'] = {
-            "id": self.user.id,
-            "username": self.user.username,
-            "email": self.user.email,
-            "telefono": self.user.telefono,
-            "rol": self.user.rol.name if self.user.rol else None,
-        }
-
-        return data
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)

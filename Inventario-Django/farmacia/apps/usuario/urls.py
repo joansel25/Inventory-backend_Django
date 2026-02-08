@@ -1,10 +1,10 @@
-from django.urls import path
-from .views import CustomTokenObtainPairView
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import *
+from .views import UsuarioViewSet
+
+
 
 router = DefaultRouter()
-router.register(r'usuarios', UsuarioViewset, basename='usuario')
-router.register(r'roles', RolViewset, basename='roles')
+router.register(r'usuarios', UsuarioViewSet, basename='usuario')
 
 urlpatterns = router.urls

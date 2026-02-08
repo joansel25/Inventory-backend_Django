@@ -1,23 +1,21 @@
+# apps/users/models.py
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.contrib.auth.models import AbstractUser, UserManager
-from model_utils.models import TimeStampedModel
 
-class Rol(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    def __str__(self):
-        return self.name
+class Usuario(AbstractUser):
+    ROLES = (
+        ('admin', 'Administrador'),
+        ('farmaceutico', 'Farmacéutico'),
+        ('bodeguero', 'Bodeguero'),
+        ('auxiliar', 'Auxiliar de Farmacia'),
+    )
 
-class UsuarioLegacy(models.Model):
-    name = models.CharField(max_length=200)
-    email = models.EmailField(unique=True)
+    rol = models.CharField(max_length=20, choices=ROLES, default='auxiliar')
+    telefono = models.CharField(max_length=15, blank=True, null=True)
 
-    def __str__(self):
-        return self.name
-
-class Usuario(AbstractUser ):             
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    rol = models.ForeignKey(Rol, null=True, blank=True, on_delete=models.SET_NULL, related_name='usuarios')#unique
-    objects = UserManager()
+    class Meta:
+        verbose_name = "Usuario"
+        verbose_name_plural = "Usuarios"
 
     def __str__(self):
-        return self.username
+        return f"{self.get_full_name()} ({self.get_rol_display()})"

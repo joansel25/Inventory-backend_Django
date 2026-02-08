@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+.tox
+.coverage
+.git
+.gitignore
+db.sqlite3
+.env
+staticfiles
+media
