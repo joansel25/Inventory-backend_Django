@@ -109,10 +109,10 @@ AUTH_USER_MODEL = 'usuario.Usuario'
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/inventario_farmacia'),
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require=True   # ← Esto fuerza SSL (necesario en Render)
     )
 }
-
 
 
 # Password validation
