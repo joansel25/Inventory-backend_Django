@@ -146,20 +146,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_URL = '/static/'
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Configuración de Whitenoise para servir estáticos en producción (Vercel)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -189,11 +175,11 @@ DEFAULT_FROM_EMAIL = 'jcardenasgutierrez63@gmail.com'
 # CORS Configuration
 # Lee los orígenes permitidos desde variables de entorno (separados por espacio)
 # Ejemplo en Vercel: https://mi-frontend.vercel.app http://localhost:5173
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', "http://localhost:5173 http://localhost:5174").split(' ')
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', "http://localhost:5173 http://localhost:5174 https://frontend-api-despliegue-react-vite.vercel.app").split(' ')
 
 # To allow the frontend to make POST, PUT, DELETE requests
 # Importante para que funcionen los formularios y peticiones seguras en producción
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', "http://localhost:5173").split(' ')
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', "http://localhost:5173 https://frontend-api-despliegue-react-vite.vercel.app").split(' ')
 
 # Allow credentials (cookies, authorization headers) in CORS requests
 CORS_ALLOW_CREDENTIALS = True
