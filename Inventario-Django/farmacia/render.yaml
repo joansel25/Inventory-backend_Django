@@ -6,6 +6,7 @@ databases:
 services:
   - type: web
     name: farmacia-backend
+    rootDir: farmacia
     env: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn farmacia.wsgi:application"
