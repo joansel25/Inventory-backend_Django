@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django.http import HttpResponse
 from django.utils import timezone
 from django.db.models import Q
-from ..usuario.permissions import *
+from ..usuario.permissions import EsBodeguero, EsAdmin, EsFarmaceutico
 from .models import MovimientoInventario
 from .serializers import MovimientoInventarioSerializer
 from ..productos.pdf import build_movimiento_pdf, build_todos_movimientos_pdf
@@ -26,6 +26,7 @@ class MovimientoInventarioViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # Corregido: Usar un solo permiso que englobe a los roles permitidos (Admin, Farma, Bodeguero)
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # Se asume que EsBodeguero permite tambien a Admin y Farmaceutico, o se deben combinar
             return [IsAuthenticated(), EsBodeguero()]
         return [IsAuthenticated()]
 

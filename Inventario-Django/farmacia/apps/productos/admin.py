@@ -1,6 +1,7 @@
 +6# apps/productos/admin.py
 from django.contrib import admin
 from .models import Categoria, Laboratorio, PrincipioActivo, Producto
+from .lotes_models import Ubicacion, Lote
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
@@ -24,3 +25,14 @@ class ProductoAdmin(admin.ModelAdmin):
     search_fields = ['nombre', 'codigo']
     readonly_fields = ['codigo', 'stock_actual', 'fecha_creacion', 'creado_por']
     ordering = ['-fecha_creacion']
+
+@admin.register(Ubicacion)
+class UbicacionAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'activo']
+    search_fields = ['nombre']
+
+@admin.register(Lote)
+class LoteAdmin(admin.ModelAdmin):
+    list_display = ['producto', 'numero_lote', 'fecha_vencimiento', 'cantidad_actual', 'ubicacion']
+    list_filter = ['fecha_vencimiento', 'ubicacion']
+    search_fields = ['numero_lote', 'producto__nombre']

@@ -10,7 +10,7 @@ from rest_framework import permissions
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from apps.usuario.log_api import LogListAPIView
+from apps.monitoreo.views import FrontendLogView
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -32,6 +32,8 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
+    # Endpoint para logs del frontend (Soluciona el 404)
+    path('api/logs/', FrontendLogView.as_view(), name='frontend-logs'),
 
     path('productos/', include('apps.productos.urls')),     
     path('task/', include('apps.task.urls')),   

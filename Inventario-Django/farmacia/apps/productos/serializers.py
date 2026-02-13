@@ -1,6 +1,7 @@
 # apps/productos/serializers.py
 from rest_framework import serializers
 from .models import Categoria, PrincipioActivo, Laboratorio, Producto
+from .lotes_models import Ubicacion, Lote
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -54,3 +55,24 @@ class ProductoSerializer(serializers.ModelSerializer):
     def get_ganancia_porcentual(self, obj):
         """Obtiene la ganancia porcentual del producto (es una @property)"""
         return obj.ganancia_porcentual  # ✅ Sin paréntesis porque es @property
+
+class UbicacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ubicacion
+        fields = '__all__'
+
+class LoteSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.CharField(source='producto.nombre', read_only=True)
+    producto_codigo = serializers.CharField(source='producto.codigo', read_only=True)
+    ubicacion_nombre = serializers.CharField(source='ubicacion.nombre', read_only=True)
+    estado_vencimiento = serializers.ReadOnlyField()
+    creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True, default='Sistema')
+
+    class Meta:
+        model = Lote
+        fields = [
+            'id', 'producto', 'producto_nombre', 'producto_codigo', 'numero_lote',
+            'fecha_vencimiento', 'cantidad_actual', 'ubicacion', 'ubicacion_nombre',
+            'estado_vencimiento', 'creado_por', 'creado_por_nombre', 'fecha_creacion'
+        ]
+        read_only_fields = ['creado_por', 'fecha_creacion', 'estado_vencimiento']

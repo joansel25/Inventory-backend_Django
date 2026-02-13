@@ -163,3 +163,6 @@ class Producto(models.Model):
             return "BAJO"
         return "NORMAL"
     estado_stock.short_description = "Estado Stock"
+
+# Importar modelos de Lotes y Ubicaciones (Archivo separado para evitar conflictos)
+from .lotes_models import Ubicacion, Lote

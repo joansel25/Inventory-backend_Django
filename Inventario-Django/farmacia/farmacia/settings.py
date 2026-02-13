@@ -14,7 +14,10 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from django.core.management.utils import get_random_secret_key
-import dj_database_url
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -106,13 +109,25 @@ AUTH_USER_MODEL = 'usuario.Usuario'
 # }
 
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/inventario_farmacia'),
-        conn_max_age=600,
-        ssl_require=True   # ← Esto fuerza SSL (necesario en Render)
-    )
-}
+
+if dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/inventario_farmacia'),
+            conn_max_age=600,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'inventario_farmacia',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 
 # Password validation

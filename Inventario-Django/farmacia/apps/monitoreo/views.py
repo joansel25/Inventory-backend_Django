@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Avg, Count, F, Q
 from django.utils import timezone
@@ -51,9 +51,18 @@ class AuditLogListView(ListAPIView):
             queryset = queryset.filter(metodo=metodo)
             
         # 3. Por Estado (Exitoso, Error Cliente, etc.)
-        estado = self.request.query_params.get('estado')
-        if estado and estado.strip():
-            queryset = queryset.filter(estado=estado)
+        # Adaptado para recibir filtros del frontend: exito, fallo, advertencia
+        estado_filter = self.request.query_params.get('estado')
+        if estado_filter:
+            if estado_filter == 'exito':
+                queryset = queryset.filter(codigo_estado__gte=200, codigo_estado__lt=300)
+            elif estado_filter == 'advertencia':
+                queryset = queryset.filter(codigo_estado__gte=400, codigo_estado__lt=500)
+            elif estado_filter == 'fallo':
+                queryset = queryset.filter(codigo_estado__gte=500)
+            else:
+                # Fallback por si buscan por texto exacto antiguo
+                queryset = queryset.filter(estado__icontains=estado_filter)
             
         # 4. Por Rango de Fechas (Soporta date_from/date_to del frontend)
         fecha_inicio = self.request.query_params.get('fecha_inicio') or self.request.query_params.get('date_from')
@@ -121,3 +130,35 @@ class DashboardMetricsView(APIView):
             },
             "endpoints_lentos": slowest_endpoints
         })
+
+class FrontendLogView(APIView):
+    """
+    Endpoint para recibir logs de errores desde el Frontend.
+    Evita el error 404 en consola y centraliza los errores de cliente.
+    """
+    permission_classes = [AllowAny] # Permitir reportar errores incluso si falló el login
+
+    def post(self, request):
+        try:
+            data = request.data
+            user = request.user if request.user.is_authenticated else None
+            
+            # Mapear datos del frontend a nuestro modelo APIMetric
+            # El frontend suele enviar: { message, level, context, ... }
+            mensaje = data.get('message') or data.get('error') or "Error reportado desde Frontend"
+            url_origen = data.get('url') or "Frontend"
+            
+            # Guardamos el log
+            APIMetric.objects.create(
+                usuario=user,
+                endpoint=f"CLIENTE: {url_origen}",
+                metodo="LOG",
+                codigo_estado=500 if "error" in str(data).lower() else 400,
+                estado="Fallo Frontend",
+                mensaje=str(mensaje)[:500], # Truncar para evitar errores de BD
+                tiempo_respuesta_ms=0
+            )
+            return Response({"status": "log_received"})
+        except Exception as e:
+            # Fallar silenciosamente para no romper la app del cliente
+            return Response({"status": "error_logging"}, status=200)

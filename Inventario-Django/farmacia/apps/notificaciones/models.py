@@ -156,7 +156,7 @@ ACCIONES RECOMENDADAS:
 3. Actualizar el estado en el sistema.
 
 Acceso directo al producto:
-{getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')}/productos/{self.producto.id}
+{getattr(settings, 'FRONTEND_URL', 'https://frontend-api-despliegue-react-vite.vercel.app')}/productos/{self.producto.id}
 
 ---
 Sistema de Gestión de Inventario - Farmacia
@@ -164,7 +164,7 @@ Sistema de Gestión de Inventario - Farmacia
 
         try:
             # ✅ CONFIGURAR EMAIL FROM
-            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'sistema@farmacia-gym.com')
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'jcardenasgutierrez6@gail.com')
             
             # ✅ ENVIAR EMAIL
             send_mail(
