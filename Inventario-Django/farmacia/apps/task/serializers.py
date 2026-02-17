@@ -36,7 +36,7 @@ class MovimientoInventarioSerializer(serializers.ModelSerializer):
         
         if tipo in ['salida', 'ajuste'] and cantidad > producto.stock_actual:
             raise serializers.ValidationError({
-                'cantidad': f"Stock insuficiente. Solo hay {producto.stock_actual} unidades disponibles."
+                'cantidad': f"Stock insuficiente en '{producto.nombre}' (ID: {producto.id}). Tienes {producto.stock_actual}, intentas sacar {cantidad}."
             })
         
         validated_data['usuario'] = self.context['request'].user
@@ -63,7 +63,7 @@ class MovimientoInventarioSerializer(serializers.ModelSerializer):
         # 3. Ahora validamos si la *nueva* operación es posible con ese stock.
         if new_tipo in ['salida', 'ajuste'] and new_cantidad > stock_disponible_operacion:
             raise serializers.ValidationError({
-                'cantidad': f"Stock insuficiente para esta modificación. El stock disponible para la operación es de {stock_disponible_operacion} unidades."
+                'cantidad': f"Stock insuficiente para modificar '{producto.nombre}' (ID: {producto.id}). Disponible real: {stock_disponible_operacion}. Intentas asignar: {new_cantidad}."
             })
 
         # Si la validación es exitosa, procedemos con la actualización normal.
