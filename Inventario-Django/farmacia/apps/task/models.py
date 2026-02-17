@@ -5,6 +5,8 @@ from ..productos.models import Producto
 from ..usuario.models import Usuario
 
 
+from ..productos.lotes_models import Lote
+
 class MovimientoInventario(models.Model):
     TIPO_CHOICES = (
         ('entrada', 'Entrada'),
@@ -16,6 +18,14 @@ class MovimientoInventario(models.Model):
         Producto, 
         on_delete=models.PROTECT, 
         related_name='movimientos'
+    )
+    lote = models.ForeignKey(
+        Lote,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos',
+        help_text="Lote afectado por este movimiento"
     )
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     cantidad = models.PositiveIntegerField()
@@ -38,56 +48,94 @@ class MovimientoInventario(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.get_tipo_display()} - {self.producto.nombre} ({self.cantidad})"
+        lote_str = f" (Lote: {self.lote.numero_lote})" if self.lote else ""
+        return f"{self.get_tipo_display()} - {self.producto.nombre}{lote_str} ({self.cantidad})"
 
     def clean(self):
-        # Validar stock para Salidas y Ajustes
+        # Validar stock GLOBAL para Salidas y Ajustes
         if self.tipo in ['salida', 'ajuste'] and self.cantidad > self.producto.stock_actual:
             raise ValidationError(
-                f"No hay suficiente stock. Disponible: {self.producto.stock_actual}"
+                f"No hay suficiente stock GLOBAL. Disponible: {self.producto.stock_actual}"
             )
+        
+        # Validar stock de LOTE si se especifica
+        if self.lote and self.tipo in ['salida', 'ajuste']:
+            if self.lote.producto != self.producto:
+                 raise ValidationError("El lote seleccionado no pertenece al producto.")
+            
+            if self.cantidad > self.lote.cantidad_actual:
+                 raise ValidationError(
+                    f"Stock insuficiente en el LOTE {self.lote.numero_lote}. Disponible: {self.lote.cantidad_actual}"
+                )
 
     @transaction.atomic
     def save(self, *args, **kwargs):
-        # 1. Si es EDICIÓN, primero revertimos el efecto del movimiento anterior
+        # 1. Si es EDICIÓN, revertir historial
         if self.pk:
             try:
                 old_instance = MovimientoInventario.objects.get(pk=self.pk)
-                # Revertir: Si era entrada, restamos. Si era salida/ajuste, sumamos.
+                # Revertir Global
                 if old_instance.tipo == 'entrada':
                     old_instance.producto.stock_actual -= old_instance.cantidad
                 elif old_instance.tipo in ['salida', 'ajuste']:
                     old_instance.producto.stock_actual += old_instance.cantidad
-                
                 old_instance.producto.save()
+
+                # Revertir Lote (si tenía)
+                if old_instance.lote:
+                    if old_instance.tipo == 'entrada':
+                        old_instance.lote.cantidad_actual -= old_instance.cantidad
+                    elif old_instance.tipo in ['salida', 'ajuste']:
+                        old_instance.lote.cantidad_actual += old_instance.cantidad
+                    old_instance.lote.save()
                 
-                # Refrescar el producto actual para tener el dato correcto antes de aplicar el nuevo cambio
                 if old_instance.producto.pk == self.producto.pk:
                     self.producto.refresh_from_db()
+                if self.lote and old_instance.lote and old_instance.lote.pk == self.lote.pk:
+                    self.lote.refresh_from_db()
+
             except MovimientoInventario.DoesNotExist:
                 pass
 
-        # 2. Validar el nuevo movimiento (con el stock actualizado tras la reversión)
-        # Nota: clean() valida, pero aquí aseguramos la lógica antes de guardar
-        if self.tipo in ['salida', 'ajuste'] and self.cantidad > self.producto.stock_actual:
-             raise ValidationError(f"No hay suficiente stock. Disponible: {self.producto.stock_actual}")
+        # 2. Validaciones (Clean ya valida, pero aseguramos)
+        if self.tipo in ['salida', 'ajuste']:
+             if self.cantidad > self.producto.stock_actual:
+                 raise ValidationError(f"No hay suficiente stock. Disponible: {self.producto.stock_actual}")
+             if self.lote and self.cantidad > self.lote.cantidad_actual:
+                 raise ValidationError(f"Stock insuficiente en lote. Disponible: {self.lote.cantidad_actual}")
         
-        # 3. Aplicar el NUEVO movimiento
+        # 3. Aplicar NUEVO movimiento Global
         if self.tipo == 'entrada':
             self.producto.stock_actual += self.cantidad
         elif self.tipo in ['salida', 'ajuste']:
             self.producto.stock_actual -= self.cantidad
-        
-        self.producto.save() # Esto dispara las alertas de bajo stock si corresponde
+        self.producto.save()
+
+        # 4. Aplicar NUEVO movimiento a Lote
+        if self.lote:
+            if self.tipo == 'entrada':
+                self.lote.cantidad_actual += self.cantidad
+            elif self.tipo in ['salida', 'ajuste']:
+                self.lote.cantidad_actual -= self.cantidad
+            self.lote.save()
+
         super().save(*args, **kwargs)
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
-        # Revertir el efecto al ELIMINAR un movimiento
+        # Revertir Global
         if self.tipo == 'entrada':
             self.producto.stock_actual -= self.cantidad
         elif self.tipo in ['salida', 'ajuste']:
             self.producto.stock_actual += self.cantidad
-        
         self.producto.save()
+
+        # Revertir Lote
+        if self.lote:
+            if self.tipo == 'entrada':
+                self.lote.cantidad_actual -= self.cantidad
+            elif self.tipo in ['salida', 'ajuste']:
+                self.lote.cantidad_actual += self.cantidad
+            self.lote.save()
+
         super().delete(*args, **kwargs)
