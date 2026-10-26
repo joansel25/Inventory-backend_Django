@@ -195,8 +195,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'jcardenasgutierrez63@gmail.com'
-# NOTA: Reemplaza el valor de abajo con tu Contraseña de Aplicación de Google (16 caracteres)
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'zicn vjnt ndrp ewug')
+# Contraseña de Aplicación de Google: definir en la variable de entorno EMAIL_HOST_PASSWORD
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'jcardenasgutierrez63@gmail.com'
 
 
